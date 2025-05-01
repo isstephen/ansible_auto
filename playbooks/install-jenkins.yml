@@ -1,0 +1,18 @@
+---
+- hosts: jenkins
+  become: yes
+  vars:
+    jenkins_http_port: 8080
+    jenkins_plugins:
+      - workflow-aggregator
+      - docker-plugin
+      - amazon-ecr
+  roles:
+    - geerlingguy.jenkins
+    - community.docker.docker
+  tasks:
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes

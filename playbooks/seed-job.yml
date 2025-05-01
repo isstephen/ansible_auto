@@ -1,0 +1,42 @@
+---
+- hosts: jenkins
+  gather_facts: no
+  vars:
+    jenkins_url: "http://localhost:8080"
+    jenkins_user: "admin"
+    jenkins_password: "{{ jenkins_admin_password }}"
+    job_name: "Build-and-Push"
+    repo_url: "https://github.com/<org>/<repo>.git"
+  tasks:
+    - name: Install Job DSL plugin (guarantee present)
+      jenkins_plugin:
+        name: job-dsl
+        state: present
+        url: "{{ jenkins_url }}"
+        user: "{{ jenkins_user }}"
+        password: "{{ jenkins_password }}"
+
+    - name: Create multibranch pipeline job
+      jenkins_job:
+        name: "{{ job_name }}"
+        state: present
+        config: |
+          <flow-definition plugin="workflow-job">
+            <description>Pipeline from GitHub</description>
+            <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps">
+              <scm class="hudson.plugins.git.GitSCM" plugin="git">
+                <userRemoteConfigs>
+                  <hudson.plugins.git.UserRemoteConfig>
+                    <url>{{ repo_url }}</url>
+                  </hudson.plugins.git.UserRemoteConfig>
+                </userRemoteConfigs>
+                <branches>
+                  <hudson.plugins.git.BranchSpec>
+                    <name>*/main</name>
+                  </hudson.plugins.git.BranchSpec>
+                </branches>
+              </scm>
+              <scriptPath>Jenkinsfile</scriptPath>
+              <lightweight>true</lightweight>
+            </definition>
+          </flow-definition>
