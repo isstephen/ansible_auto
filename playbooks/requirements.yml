@@ -1,0 +1,5 @@
+---
+roles:
+  - name: geerlingguy.jenkins
+collections:
+  - name: community.docker
