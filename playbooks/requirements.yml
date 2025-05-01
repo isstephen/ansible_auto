@@ -1,5 +1,6 @@
 ---
 roles:
   - name: geerlingguy.jenkins
+  - name: geerlingguy.docker      
 collections:
-  - name: community.docker
+  - name: community.docker       
