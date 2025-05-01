@@ -8,8 +8,9 @@
       - docker-plugin
       - amazon-ecr
   roles:
-    - geerlingguy.jenkins
-    - community.docker.docker
+      - geerlingguy.jenkins      # installs & configures Jenkins
+      - geerlingguy.docker       # installs Docker Engine
+      # - community.docker.docker   <-- delete or comment this
   tasks:
     - name: Add ec2-user to docker group
       user:
