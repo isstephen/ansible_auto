@@ -1,41 +1,52 @@
 ###############################################################################
 # playbooks/install-jenkins.yml
 ###############################################################################
+
+###############################################################################
+# 1. Bootstrap – make sure the managed host has Python ≥ 3.8
+###############################################################################
 - hosts: jenkins
-  gather_facts: false
+  gather_facts: false          # can’t gather until an adequate Python is in place
   become: yes
+
   tasks:
-    - name: Ensure Python ≥ 3.8 is present
+    - name: Ensure Python ≥ 3.8 is present
       raw: |
-        if python3 - <<'PY'
-import sys, os
-sys.exit(0) if sys.version_info >= (3,8) else sys.exit(1)
+        # If python3 is already ≥3.8, exit immediately
+        python3 - <<'PY'
+import sys
+sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
 PY
-        then exit 0; fi
+        if [ $? -eq 0 ]; then
+          exit 0
+        fi
+
+        # Otherwise install python38 from the core repo
         yum -y install python38
         alternatives --set python3 /usr/bin/python3.8
       changed_when: false
-      check_mode: no
+      check_mode: no           # force execution even when Semaphore uses --check
 
     - name: Tell Ansible to use the new interpreter from now on
       set_fact:
         ansible_python_interpreter: /usr/bin/python3
-# --------------------------------------------------------------------------- #
-# Everything below here stays exactly as you have it
-# --------------------------------------------------------------------------- #
+
+###############################################################################
+# 2. Main play – install Java, add Jenkins repo, install & start Jenkins
+###############################################################################
 - hosts: jenkins
-  become: yes
   gather_facts: true
+  become: yes
 
   tasks:
     - name: Install required packages
       yum:
         name:
-          - java-17-amazon-corretto
+          - java-17-amazon-corretto   # change to java‑11 if you prefer
           - git
         state: present
 
-    - name: Add Jenkins repo key
+    - name: Add Jenkins repo GPG key
       rpm_key:
         key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
 
@@ -57,4 +68,3 @@ PY
         name: jenkins
         enabled: yes
         state: started
-
