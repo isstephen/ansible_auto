@@ -3,31 +3,23 @@
 ###############################################################################
 
 ###############################################################################
-# 1. Bootstrap – make sure the managed host has Python ≥ 3.8
+# 1. Bootstrap – make sure the host has Python ≥ 3.8
 ###############################################################################
 - hosts: jenkins
-  gather_facts: false          # can’t gather until an adequate Python is in place
+  gather_facts: false          # can’t gather until Python is upgraded
   become: yes
 
   tasks:
-    - name: Ensure Python ≥ 3.8 is present
+    - name: Ensure python38 is installed and set as python3
       raw: |
-        # If python3 is already ≥3.8, exit immediately
-        python3 - <<'PY'
-import sys
-sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
-PY
-        if [ $? -eq 0 ]; then
-          exit 0
-        fi
-
-        # Otherwise install python38 from the core repo
-        yum -y install python38
+        # Install python38 only if it’s missing
+        rpm -q python38 >/dev/null 2>&1 || yum -y install python38
+        # Point /usr/bin/python3 at the new binary
         alternatives --set python3 /usr/bin/python3.8
-      changed_when: false
-      check_mode: no           # force execution even when Semaphore uses --check
+      changed_when: false      # keep Ansible output tidy
+      check_mode: no           # force execution even if template runs with --check
 
-    - name: Tell Ansible to use the new interpreter from now on
+    - name: Tell Ansible to use the upgraded interpreter
       set_fact:
         ansible_python_interpreter: /usr/bin/python3
 
@@ -42,7 +34,7 @@ PY
     - name: Install required packages
       yum:
         name:
-          - java-17-amazon-corretto   # change to java‑11 if you prefer
+          - java-17-amazon-corretto   # switch to java‑11 if you prefer
           - git
         state: present
 
