@@ -7,15 +7,15 @@
   tasks:
 
     - name: Install Python 3.11 if not already present
-    raw: |
-      if [ ! -x /usr/bin/python3.11 ]; then
-        amazon-linux-extras enable python3.11 &&
-        yum clean metadata &&
-        yum -y install python3.11 &&
-        alternatives --set python3 /usr/bin/python3.11
-      fi
-    changed_when: false
-    check_mode: no          # ← ensures task runs even when Semaphore uses --check
+      raw: |
+        if [ ! -x /usr/bin/python3.11 ]; then
+          amazon-linux-extras enable python3.11 &&
+          yum clean metadata &&
+          yum -y install python3.11 &&
+          alternatives --set python3 /usr/bin/python3.11
+        fi
+      changed_when: false
+      check_mode: no          # ← ensures task runs even when Semaphore uses --check
 
 
 
