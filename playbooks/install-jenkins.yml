@@ -100,3 +100,50 @@
       service:
         name: jenkins
         state: restarted
+
+    ###############################################################################
+    # 7.  Install JCasC + Git + Maven plugins via Jenkins API
+    ###############################################################################
+    - name: Ensure JCasC, Git and Maven plugins are present
+      community.general.jenkins_plugin:
+        name: "{{ item }}"
+        state: present
+        jenkins_url:  "http://{{ inventory_hostname }}:8080"
+        url_username: "ciadmin"
+        url_password: "S3cret!"
+      loop:
+        - configuration-as-code
+        - git
+        - maven-plugin
+      notify: restart jenkins          # may require restart first time
+    
+    ###############################################################################
+    # 8.  Copy JCasC YAML bundle
+    ###############################################################################
+    - name: Ensure casc_configs directory exists
+      file:
+        path: /var/lib/jenkins/casc_configs
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: '0755'
+    
+    - name: Deploy JCasC plugin list
+      copy:
+        src: files/casc/plugins.yml
+        dest: /var/lib/jenkins/casc_configs/plugins.yml
+        owner: jenkins
+        group: jenkins
+        mode: '0644'
+      notify: restart jenkins          # restart if YAML changed
+    
+    ###############################################################################
+    # 9.  Tell Jenkins where the JCasC files live
+    ###############################################################################
+    - name: Add casc.jenkins.config JVM option
+      lineinfile:
+        path: /etc/sysconfig/jenkins
+        regexp: '^JENKINS_JAVA_OPTIONS='
+        line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false -Dcasc.jenkins.config=/var/lib/jenkins/casc_configs"'
+        create: yes
+      notify: restart jenkins
