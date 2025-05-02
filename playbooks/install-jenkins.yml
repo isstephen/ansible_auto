@@ -1,32 +1,37 @@
-# playbooks/install-jenkins.yml  (shortened)
-
+###############################################################################
+# playbooks/install-jenkins.yml
+###############################################################################
 - hosts: jenkins
-  gather_facts: false
+  gather_facts: false       # can't gather until Python ≥3.8 exists
   become: yes
   tasks:
-    - name: Ensure Python ≥ 3.8 is present
+
+    - name: Install Python 3.11 if not already present
       raw: |
-        if python3 - <<'PY'
-        import sys
-        sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
-        PY
-        then
-          echo "python OK"
-        else
-          amazon-linux-extras enable python3.11
-          yum clean metadata
-          yum -y install python3.11
+        if [ ! -x /usr/bin/python3.11 ]; then
+          amazon-linux-extras enable python3.11 &&
+          yum clean metadata &&
+          yum -y install python3.11 &&
+          alternatives --set python3 /usr/bin/python3.11
         fi
-    - set_fact:
+      changed_when: false    # keeps output tidy
+
+    - name: Tell Ansible to use the new interpreter from now on
+      set_fact:
         ansible_python_interpreter: /usr/bin/python3.11
 
+# --------------------------------------------------------------------------- #
+# Everything below here stays exactly as you have it
+# --------------------------------------------------------------------------- #
 - hosts: jenkins
   become: yes
+  gather_facts: true
+
   tasks:
     - name: Install required packages
       yum:
         name:
-          - java-17-amazon-corretto   # or java‑11
+          - java-17-amazon-corretto
           - git
         state: present
 
@@ -52,3 +57,4 @@
         name: jenkins
         enabled: yes
         state: started
+
