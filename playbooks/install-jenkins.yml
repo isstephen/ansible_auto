@@ -52,6 +52,7 @@
         path: /etc/sysconfig/jenkins
         regexp: '^JENKINS_JAVA_OPTIONS='
         line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false"'
+        create: yes
       notify: restart jenkins
 
     - name: Drop Groovy init script to create admin user
