@@ -91,8 +91,23 @@
         enabled: yes
         state: started
 
+    #####################################################################
+    # 7. Wait for Jenkins HTTP endpoint to be up
+    #####################################################################
+    - name: Wait until port 8080 is open
+      wait_for:
+        host: {{ inventory_hostname }}
+        port: 8080
+        connect_timeout: 3
+        sleep: 2
+        timeout: 120
+
+    - name: Give Jenkins a few more seconds to finish loading
+      pause:
+        seconds: 10
+        
     ###############################################################################
-    # 7.  Install JCasC + Git + Maven plugins via Jenkins API
+    # 8.  Install JCasC + Git + Maven plugins via Jenkins API
     ###############################################################################
     - name: Ensure JCasC, Git and Maven plugins are present
       community.general.jenkins_plugin:
