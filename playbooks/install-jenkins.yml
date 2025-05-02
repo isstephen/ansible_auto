@@ -54,7 +54,15 @@
         line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false"'
         create: yes
       notify: restart jenkins
-
+      
+    - name: Ensure init.groovy.d directory exists
+      file:
+        path: /var/lib/jenkins/init.groovy.d
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: '0755'
+        
     - name: Drop Groovy init script to create admin user
       copy:
         dest: /var/lib/jenkins/init.groovy.d/01_create_admin.groovy
