@@ -91,16 +91,6 @@
         enabled: yes
         state: started
 
-  # ← blank line above closes the tasks list
-  #####################################################################
-  # Handlers
-  #####################################################################
-  handlers:
-    - name: restart jenkins
-      service:
-        name: jenkins
-        state: restarted
-
     ###############################################################################
     # 7.  Install JCasC + Git + Maven plugins via Jenkins API
     ###############################################################################
@@ -147,3 +137,13 @@
         line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false -Dcasc.jenkins.config=/var/lib/jenkins/casc_configs"'
         create: yes
       notify: restart jenkins
+    # ← blank line above closes the tasks list
+    
+  #####################################################################
+  # Handlers
+  #####################################################################
+  handlers:
+    - name: restart jenkins
+      service:
+        name: jenkins
+        state: restarted
