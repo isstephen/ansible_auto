@@ -1,9 +1,0 @@
-jenkins:
-  plugins:
-    sites:
-      - id: "default"
-        url: "https://updates.jenkins.io/download"
-    required:
-      - git
-      - maven-plugin          # “Maven Integration” in the GUI
-      - configuration-as-code # keep JCasC itself present
