@@ -2,17 +2,14 @@
   become: yes
   gather_facts: true
 
-  # ❶ Tell every yum module in this play to use classic Yum‑3
-  vars:
-    ansible_yum_use_backend: yum       # <‑‑ one‑line, play‑wide setting
-
   tasks:
     - name: Install required packages
-      yum:
+      yum:                           # ← module call begins
         name:
-          - java-17-amazon-corretto    # switch to java‑11 if you prefer
+          - java-17-amazon-corretto  # change to java‑11 if you prefer
           - git
         state: present
+        use_backend: yum             # ← **same indent** as name/state
 
     - name: Add Jenkins repo GPG key
       rpm_key:
@@ -30,11 +27,10 @@
       yum:
         name: jenkins
         state: latest
+        use_backend: yum             # ← same hint here
 
     - name: Enable & start Jenkins
       service:
         name: jenkins
         enabled: yes
         state: started
-
-
