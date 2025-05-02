@@ -51,3 +51,43 @@
         name: jenkins
         enabled: yes
         state: started
+    # ------------------------------------------------------------------
+    # After Jenkins package is installed but *before* service restart
+    # ------------------------------------------------------------------
+    
+    - name: Disable the setup wizard
+      lineinfile:
+        path: /etc/sysconfig/jenkins        # Amazon Linux RPM
+        regexp: '^JENKINS_JAVA_OPTIONS='
+        line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false"'
+      notify: restart jenkins
+    
+    # Groovy that adds/updates the admin user "admin" with password "admin"
+    - name: Drop Groovy init script to create admin user
+      copy:
+        dest: /var/lib/jenkins/init.groovy.d/01_create_admin.groovy
+        owner: jenkins
+        group: jenkins
+        mode: '0644'
+        content: |
+          import jenkins.model.*
+          import hudson.security.*
+          def instance = Jenkins.getInstance()
+          def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+          hudsonRealm.createAccount("ciadmin","S3cret!")
+          instance.setSecurityRealm(hudsonRealm)
+          def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+          strategy.setAllowAnonymousRead(false)
+          instance.setAuthorizationStrategy(strategy)
+          instance.save()
+      notify: restart jenkins
+    
+    # ------------------------------------------------------------------
+    # Handlers
+    # ------------------------------------------------------------------
+    handlers:
+      - name: restart jenkins
+        service:
+          name: jenkins
+          state: restarted
+
