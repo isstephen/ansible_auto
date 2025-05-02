@@ -1,19 +1,24 @@
----
+# playbooks/install-jenkins.yml
 - hosts: jenkins
+  gather_facts: false
   become: yes
-  vars:
-    jenkins_http_port: 8080
-    jenkins_plugins:
-      - workflow-aggregator
-      - docker-plugin
-      - amazon-ecr
-  roles:
-      - geerlingguy.jenkins      # installs & configures Jenkins
-      - geerlingguy.docker       # installs Docker Engine
-      # - community.docker.docker   <-- delete or comment this
   tasks:
-    - name: Add ec2-user to docker group
-      user:
-        name: ec2-user
-        groups: docker
-        append: yes
+    - name: Ensure Python ≥ 3.8 is present
+      raw: |
+        if python3 -c 'import sys; exit(0) if sys.version_info >= (3,8) else exit(1)'; then
+          echo "python OK"
+        else
+          amazon-linux-extras enable python3.11
+          yum clean metadata
+          yum -y install python3.11
+        fi
+
+    - name: Set interpreter for subsequent tasks
+      set_fact:
+        ansible_python_interpreter: /usr/bin/python3.11
+
+  # now you can safely gather facts
+- hosts: jenkins
+  gather_facts: true
+  roles:
+    - jenkins_role   # whatever roles/tasks you already have
