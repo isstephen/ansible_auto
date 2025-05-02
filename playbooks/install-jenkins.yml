@@ -10,10 +10,10 @@
     - name: Install Java 17 and Git
       shell: yum install -y java-17-amazon-corretto git
       args:
-        creates: /usr/lib/jvm/java-17-amazon-corretto   # idempotent
+        creates: /usr/lib/jvm/java-17-amazon-corretto
 
     #####################################################################
-    # 2. Import Jenkins GPG key (skips if already imported)
+    # 2. Import Jenkins GPG key
     #####################################################################
     - name: Import Jenkins GPG key
       shell: rpm --import https://pkg.jenkins.io/redhat/jenkins.io-2023.key
@@ -33,10 +33,10 @@
           baseurl=https://pkg.jenkins.io/redhat-stable
           gpgcheck=1
           gpgkey=https://pkg.jenkins.io/redhat/jenkins.io-2023.key
-      notify: restart jenkins     # repo change → restart later
+      notify: restart jenkins
 
     #####################################################################
-    # 4. Install Jenkins package (once)
+    # 4. Install Jenkins package
     #####################################################################
     - name: Install Jenkins
       shell: yum install -y jenkins
@@ -45,7 +45,7 @@
       notify: restart jenkins
 
     #####################################################################
-    # 5. Disable setup‑wizard & create admin user (Groovy)
+    # 5. Disable setup‑wizard & create admin user
     #####################################################################
     - name: Disable setup wizard
       lineinfile:
@@ -74,7 +74,7 @@
       notify: restart jenkins
 
     #####################################################################
-    # 6. Ensure service is enabled & running (will restart if notified)
+    # 6. Ensure service is enabled & running
     #####################################################################
     - name: Enable Jenkins service
       service:
@@ -82,11 +82,12 @@
         enabled: yes
         state: started
 
-###########################################################################
-# Handlers – **flush‑left**, sibling of tasks/vars/hosts
-###########################################################################
-handlers:
-  - name: restart jenkins
-    service:
-      name: jenkins
-      state: restarted
+  # ← blank line above closes the tasks list
+  #####################################################################
+  # Handlers
+  #####################################################################
+  handlers:
+    - name: restart jenkins
+      service:
+        name: jenkins
+        state: restarted
