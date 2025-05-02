@@ -1,14 +1,15 @@
 - hosts: jenkins
-  gather_facts: true
   become: yes
+  gather_facts: true
 
   tasks:
     - name: Install required packages
       yum:
         name:
-          - java-17-amazon-corretto   # use java‑11 if you prefer
+          - java-17-amazon-corretto   # switch to java‑11 if you prefer
           - git
         state: present
+        use_backend: yum              # ←  important on Amazon Linux 2
 
     - name: Add Jenkins repo GPG key
       rpm_key:
@@ -26,9 +27,11 @@
       yum:
         name: jenkins
         state: latest
+        use_backend: yum              # ←  same hint here
 
     - name: Enable & start Jenkins
       service:
         name: jenkins
         enabled: yes
         state: started
+
