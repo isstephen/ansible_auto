@@ -1,112 +1,61 @@
+# playbooks/install-jenkins.yml  — Amazon Linux 2 + ansible‑core 2.17+
+
 - hosts: jenkins
   become: yes
   gather_facts: true
 
-  # Tell every yum module in this play to use classic Yum‑3
-  vars:
-    ansible_yum_use_backend: yum        # <- one line, play‑wide
-
   tasks:
-    - name: Install required packages
-      yum:
-        name:
-          - java-17-amazon-corretto     # switch to java‑11 if you want
-          - git
-        state: present
+    ###########################################################################
+    # 1. Install Java and Git (idempotent check with rpm -q)
+    ###########################################################################
+    - name: Ensure Java 17 and Git are installed
+      shell: |
+        rpm -q java-17-amazon-corretto git || \
+        yum install -y java-17-amazon-corretto git
+      args:
+        warn: false                       # silence “consider using package”
+      register: pkg_out
+      changed_when: "'Installed' in pkg_out.stdout or 'Complete!' in pkg_out.stdout"
 
-    - name: Add Jenkins repo GPG key
-      rpm_key:
-        key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+    ###########################################################################
+    # 2. Add Jenkins repo and key (idempotent)
+    ###########################################################################
+    - name: Import Jenkins GPG key (if missing)
+      shell: |
+        rpm -qi gpg-pubkey-95b16314-63b171f2 || \
+        rpm --import https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+      args:
+        warn: false
+      register: key_out
+      changed_when: key_out.rc == 0 and key_out.stdout == ""
 
-    - name: Add Jenkins repository
-      yum_repository:
-        name: jenkins
-        description: Jenkins
-        baseurl: https://pkg.jenkins.io/redhat-stable
-        gpgcheck: yes
-        gpgkey: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+    - name: Add Jenkins yum repo file
+      copy:
+        dest: /etc/yum.repos.d/jenkins.repo
+        mode: '0644'
+        content: |
+          [jenkins]
+          name=Jenkins
+          baseurl=https://pkg.jenkins.io/redhat-stable
+          gpgcheck=1
+          gpgkey=https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+      register: repo_out
+      changed_when: repo_out.changed
 
-    - name: Install Jenkins
-      yum:
-        name: jenkins
-        state: latest
+    ###########################################################################
+    # 3. Install Jenkins (idempotent)
+    ###########################################################################
+    - name: Install Jenkins package
+      shell: |
+        rpm -q jenkins || yum install -y jenkins
+      args:
+        warn: false
+      register: jenkins_pkg
+      changed_when: "'Installed' in jenkins_pkg.stdout or 'Complete!' in jenkins_pkg.stdout"
 
-    - name: Enable & start Jenkins
-      service:
-        name: jenkins
-        enabled: yes
-        state: started
-- hosts: jenkins
-  become: yes
-  gather_facts: true
-
-  # Tell every yum module in this play to use classic Yum‑3
-  vars:
-    ansible_yum_use_backend: yum        # <- one line, play‑wide
-
-  tasks:
-    - name: Install required packages
-      yum:
-        name:
-          - java-17-amazon-corretto     # switch to java‑11 if you want
-          - git
-        state: present
-
-    - name: Add Jenkins repo GPG key
-      rpm_key:
-        key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
-
-    - name: Add Jenkins repository
-      yum_repository:
-        name: jenkins
-        description: Jenkins
-        baseurl: https://pkg.jenkins.io/redhat-stable
-        gpgcheck: yes
-        gpgkey: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
-
-    - name: Install Jenkins
-      yum:
-        name: jenkins
-        state: latest
-
-    - name: Enable & start Jenkins
-      service:
-        name: jenkins
-        enabled: yes
-        state: started
-- hosts: jenkins
-  become: yes
-  gather_facts: true
-
-  # Tell every yum module in this play to use classic Yum‑3
-  vars:
-    ansible_yum_use_backend: yum        # <- one line, play‑wide
-
-  tasks:
-    - name: Install required packages
-      yum:
-        name:
-          - java-17-amazon-corretto     # switch to java‑11 if you want
-          - git
-        state: present
-
-    - name: Add Jenkins repo GPG key
-      rpm_key:
-        key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
-
-    - name: Add Jenkins repository
-      yum_repository:
-        name: jenkins
-        description: Jenkins
-        baseurl: https://pkg.jenkins.io/redhat-stable
-        gpgcheck: yes
-        gpgkey: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
-
-    - name: Install Jenkins
-      yum:
-        name: jenkins
-        state: latest
-
+    ###########################################################################
+    # 4. Enable and start Jenkins service
+    ###########################################################################
     - name: Enable & start Jenkins
       service:
         name: jenkins
