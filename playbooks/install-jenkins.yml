@@ -1,29 +1,29 @@
-# playbooks/install-jenkins.yml  — works on AL2 + ansible‑core 2.18+
+# playbooks/install-jenkins.yml  – Amazon Linux 2 + ansible‑core 2.18+
 
 - hosts: jenkins
   become: yes
   gather_facts: true
 
   tasks:
-    #######################################################################
-    # 1. Install Java 17 and Git (only if not yet present)
-    #######################################################################
+    #####################################################################
+    # 1. Install Java 17 + Git (runs once)
+    #####################################################################
     - name: Install Java 17 and Git
       shell: yum install -y java-17-amazon-corretto git
       args:
-        creates: /usr/lib/jvm/java-17-amazon-corretto    # if this path exists, yum isn't called
+        creates: /usr/lib/jvm/java-17-amazon-corretto   # idempotent
 
-    #######################################################################
-    # 2. Import Jenkins GPG key (skipped if already in the RPM DB)
-    #######################################################################
+    #####################################################################
+    # 2. Import Jenkins GPG key (skips if already imported)
+    #####################################################################
     - name: Import Jenkins GPG key
       shell: rpm --import https://pkg.jenkins.io/redhat/jenkins.io-2023.key
       args:
         creates: /etc/pki/rpm-gpg/RPM-GPG-KEY-jenkins
 
-    #######################################################################
-    # 3. Add Jenkins repo file (overwrites only when content changes)
-    #######################################################################
+    #####################################################################
+    # 3. Add Jenkins repository
+    #####################################################################
     - name: Add Jenkins yum repo
       copy:
         dest: /etc/yum.repos.d/jenkins.repo
@@ -34,35 +34,27 @@
           baseurl=https://pkg.jenkins.io/redhat-stable
           gpgcheck=1
           gpgkey=https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+      notify: restart jenkins     # repo change → restart later
 
-    #######################################################################
-    # 4. Install the Jenkins package (skips if already installed)
-    #######################################################################
+    #####################################################################
+    # 4. Install Jenkins package (once)
+    #####################################################################
     - name: Install Jenkins
       shell: yum install -y jenkins
       args:
         creates: /usr/lib/jenkins/jenkins.war
+      notify: restart jenkins
 
-    #######################################################################
-    # 5. Enable and start the Jenkins service
-    #######################################################################
-    - name: Enable & start Jenkins
-      service:
-        name: jenkins
-        enabled: yes
-        state: started
-    # ------------------------------------------------------------------
-    # After Jenkins package is installed but *before* service restart
-    # ------------------------------------------------------------------
-    
-    - name: Disable the setup wizard
+    #####################################################################
+    # 5. Disable setup‑wizard & create admin user (Groovy)
+    #####################################################################
+    - name: Disable setup wizard
       lineinfile:
-        path: /etc/sysconfig/jenkins        # Amazon Linux RPM
+        path: /etc/sysconfig/jenkins
         regexp: '^JENKINS_JAVA_OPTIONS='
         line: 'JENKINS_JAVA_OPTIONS="-Djenkins.install.runSetupWizard=false"'
       notify: restart jenkins
-    
-    # Groovy that adds/updates the admin user "admin" with password "admin"
+
     - name: Drop Groovy init script to create admin user
       copy:
         dest: /var/lib/jenkins/init.groovy.d/01_create_admin.groovy
@@ -74,20 +66,28 @@
           import hudson.security.*
           def instance = Jenkins.getInstance()
           def hudsonRealm = new HudsonPrivateSecurityRealm(false)
-          hudsonRealm.createAccount("ciadmin","S3cret!")
+          hudsonRealm.createAccount("ciadmin", "S3cret!")
           instance.setSecurityRealm(hudsonRealm)
           def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
           strategy.setAllowAnonymousRead(false)
           instance.setAuthorizationStrategy(strategy)
           instance.save()
       notify: restart jenkins
-    
-    # ------------------------------------------------------------------
-    # Handlers
-    # ------------------------------------------------------------------
-    handlers:
-      - name: restart jenkins
-        service:
-          name: jenkins
-          state: restarted
 
+    #####################################################################
+    # 6. Ensure service is enabled & running (will restart if notified)
+    #####################################################################
+    - name: Enable Jenkins service
+      service:
+        name: jenkins
+        enabled: yes
+        state: started
+
+###########################################################################
+# Handlers – **flush‑left**, sibling of tasks/vars/hosts
+###########################################################################
+handlers:
+  - name: restart jenkins
+    service:
+      name: jenkins
+      state: restarted
