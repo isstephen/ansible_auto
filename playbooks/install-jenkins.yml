@@ -8,22 +8,22 @@
   tasks:
     - name: Ensure python38 is available and set as python3
       raw: |
-        # If python3 is already ≥3.8 we’re done
+        # Exit early if python3 is already ≥ 3.8
         python3 - <<'PY'
         import sys
         sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
         PY
-        if [ $? -eq 0 ]; then exit 0; fi
+        [ $? -eq 0 ] && exit 0
 
-        # Enable EPEL if python38 isn’t visible, then install it
-        yum -q list python38 >/dev/null 2>&1 || (
-          amazon-linux-extras enable epel && yum clean metadata
-        )
+        # If python38 isn't found, bring in EPEL first
+        if ! yum -q list python38 >/dev/null 2>&1; then
+          # Install the release RPM (adds the repo file under /etc/yum.repos.d)
+          yum -y install epel-release
+          yum clean metadata
+        fi
+
+        # Now install python38 and flip the alternatives link
         yum -y install python38
         alternatives --set python3 /usr/bin/python3.8
       changed_when: false
       check_mode: no
-
-    - name: Tell Ansible to use the upgraded interpreter
-      set_fact:
-        ansible_python_interpreter: /usr/bin/python3
