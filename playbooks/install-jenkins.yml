@@ -98,7 +98,7 @@
       community.general.jenkins_plugin:
         name: "{{ item }}"
         state: present
-        jenkins_url:  "http://{{ inventory_hostname }}:8080"
+        url:  "http://{{ inventory_hostname }}:8080"
         url_username: "ciadmin"
         url_password: "S3cret!"
       loop:
