@@ -7,10 +7,11 @@
     - name: Ensure Python ≥ 3.8 is present
       raw: |
         if python3 - <<'PY'
-import sys, os
-sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
-PY
-        then echo OK
+        import sys
+        sys.exit(0) if sys.version_info >= (3, 8) else sys.exit(1)
+        PY
+        then
+          echo "python OK"
         else
           amazon-linux-extras enable python3.11
           yum clean metadata
