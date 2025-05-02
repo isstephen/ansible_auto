@@ -5,8 +5,7 @@
   gather_facts: false
   become: yes
   tasks:
-
-    - name: Ensure Python ≥ 3.8 is present
+    - name: Ensure Python ≥ 3.8 is present
       raw: |
         if python3 - <<'PY'
 import sys, os
@@ -18,10 +17,9 @@ PY
       changed_when: false
       check_mode: no
 
-    - set_fact:
+    - name: Tell Ansible to use the new interpreter from now on
+      set_fact:
         ansible_python_interpreter: /usr/bin/python3
-
-
 # --------------------------------------------------------------------------- #
 # Everything below here stays exactly as you have it
 # --------------------------------------------------------------------------- #
