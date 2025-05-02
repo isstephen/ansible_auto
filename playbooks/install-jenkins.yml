@@ -96,7 +96,7 @@
     #####################################################################
     - name: Wait until port 8080 is open
       wait_for:
-        host: {{ inventory_hostname }}
+        host: "{{ inventory_hostname }}"
         port: 8080
         connect_timeout: 3
         sleep: 2
