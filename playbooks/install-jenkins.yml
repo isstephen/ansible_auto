@@ -1,3 +1,4 @@
+---
 - hosts: jenkins
   become: yes
   gather_facts: true
