@@ -1,0 +1,20 @@
+---
+# Playbook to install Apache Maven on the same EC2 host
+- hosts: jenkins
+  become: yes
+  gather_facts: true
+
+  tasks:
+    - name: Install Apache Maven
+      yum:
+        name: maven
+        state: present
+
+    - name: Verify Maven installation
+      command: mvn --version
+      register: maven_output
+      changed_when: false
+
+    - name: Display Maven version
+      debug:
+        var: maven_output.stdout_lines
