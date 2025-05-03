@@ -1,24 +1,49 @@
 ---
-# Playbook to install Apache Maven on the same EC2 host via shell for pkg_mgr shims
+# Playbook to install Apache Maven manually on EC2
 - hosts: jenkins
   become: yes
   gather_facts: true
 
-  tasks:
-    - name: Enable EPEL repository
-      shell: |
-        yum install -y epel-release
-      args:
-        creates: /etc/yum.repos.d/epel.repo
+  vars:
+    maven_version: "3.8.8"
+    maven_install_dir: "/opt/maven"
 
-    - name: Install Apache Maven
-      shell: |
-        yum install -y maven
-      args:
-        creates: /usr/bin/mvn
+  tasks:
+    - name: Ensure Maven install directory exists
+      file:
+        path: "{{ maven_install_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download Apache Maven {{ maven_version }}
+      get_url:
+        url: "https://archive.apache.org/dist/maven/maven-3/{{ maven_version }}/binaries/apache-maven-{{ maven_version }}-bin.tar.gz"
+        dest: "/tmp/apache-maven-{{ maven_version }}-bin.tar.gz"
+        mode: '0644'
+        force: no
+
+    - name: Unpack Maven
+      unarchive:
+        src: "/tmp/apache-maven-{{ maven_version }}-bin.tar.gz"
+        dest: "{{ maven_install_dir }}"
+        remote_src: yes
+
+    - name: Symlink latest Maven
+      file:
+        src: "{{ maven_install_dir }}/apache-maven-{{ maven_version }}"
+        dest: "{{ maven_install_dir }}/latest"
+        state: link
+
+    - name: Copy Maven environment script
+      copy:
+        dest: /etc/profile.d/maven.sh
+        content: |
+          export M2_HOME={{ maven_install_dir }}/latest
+          export PATH=$M2_HOME/bin:$PATH
+        mode: '0755'
 
     - name: Verify Maven installation
-      shell: mvn --version
+      shell: "{{ maven_install_dir }}/latest/bin/mvn --version"
       register: maven_output
       changed_when: false
 
