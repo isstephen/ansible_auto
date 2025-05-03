@@ -5,10 +5,15 @@
   gather_facts: true
 
   tasks:
-    - name: Install Apache Maven
-      shell: yum install -y maven
-      args:
-        creates: /usr/bin/mvn
+    - name: Enable EPEL repository (for Maven package)
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Install Apache Maven from EPEL
+      yum:
+        name: maven
+        state: present
 
     - name: Verify Maven installation
       command: mvn --version
