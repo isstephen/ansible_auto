@@ -6,9 +6,9 @@
 
   tasks:
     - name: Install Apache Maven
-      package:
-        name: maven
-        state: present
+      shell: yum install -y maven
+      args:
+        creates: /usr/bin/mvn
 
     - name: Verify Maven installation
       command: mvn --version
