@@ -109,13 +109,20 @@
     ###############################################################################
     # 8.  Install Jenkins plugins via plugin manager
     ###############################################################################
-    - name: Install Jenkins plugins via plugin manager
-      shell: |
-        /usr/local/bin/jenkins-plugin-cli \
-          --plugin-file /var/lib/jenkins/casc_configs/plugins.yml \
-          --war /usr/lib/jenkins/jenkins.war
-      args:
-        creates: /var/lib/jenkins/plugins/git.jpi
+    - name: Ensure core Jenkins plugins are installed
+      community.general.jenkins_plugin:
+        name: "{{ item }}"
+        state: present
+        url: "http://127.0.0.1:8080"
+        url_username: "admin"
+        url_password: "admin"
+      loop:
+        - git
+        - maven-plugin
+        - configuration-as-code
+        - pipeline                     # ← the “Pipeline” umbrella plugin
+        - pipeline-model-definition    # Declarative Pipeline syntax
+        - pipeline-stage-view          # Stage View for pipelines
       notify: restart jenkins
     
     ###############################################################################
