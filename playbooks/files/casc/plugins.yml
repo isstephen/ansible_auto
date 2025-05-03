@@ -7,6 +7,6 @@ jenkins:
       - git
       - maven-plugin          # “Maven Integration” in the GUI
       - configuration-as-code # keep JCasC itself present
-      - workflow-aggregator       # Pipeline: Aggregator (core Pipeline support)
+      - pipeline       # Pipeline (core Pipeline support)
       - pipeline-model-definition # Declarative Pipeline support
       - pipeline-stage-view       # Stage View for your pipelines
