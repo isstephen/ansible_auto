@@ -107,20 +107,16 @@
         seconds: 10
         
     ###############################################################################
-    # 8.  Install JCasC + Git + Maven plugins via Jenkins API
+    # 8.  Install Jenkins plugins via plugin manager
     ###############################################################################
-    - name: Ensure JCasC, Git and Maven plugins are present
-      community.general.jenkins_plugin:
-        name: "{{ item }}"
-        state: present
-        url:  "http://127.0.0.1:8080"
-        url_username: "ciadmin"
-        url_password: "S3cret!"
-      loop:
-        - configuration-as-code
-        - git
-        - maven-plugin
-      notify: restart jenkins          # may require restart first time
+    - name: Install Jenkins plugins via plugin manager
+      shell: |
+        /usr/local/bin/jenkins-plugin-cli \
+          --plugin-file /var/lib/jenkins/casc_configs/plugins.yml \
+          --war /usr/lib/jenkins/jenkins.war
+      args:
+        creates: /var/lib/jenkins/plugins/git.jpi
+      notify: restart jenkins
     
     ###############################################################################
     # 8.  Copy JCasC YAML bundle
