@@ -1,22 +1,24 @@
 ---
-# Playbook to install Apache Maven on the same EC2 host
+# Playbook to install Apache Maven on the same EC2 host via shell for pkg_mgr shims
 - hosts: jenkins
   become: yes
   gather_facts: true
 
   tasks:
-    - name: Enable EPEL repository (for Maven package)
-      yum:
-        name: epel-release
-        state: present
+    - name: Enable EPEL repository
+      shell: |
+        yum install -y epel-release
+      args:
+        creates: /etc/yum.repos.d/epel.repo
 
-    - name: Install Apache Maven from EPEL
-      yum:
-        name: maven
-        state: present
+    - name: Install Apache Maven
+      shell: |
+        yum install -y maven
+      args:
+        creates: /usr/bin/mvn
 
     - name: Verify Maven installation
-      command: mvn --version
+      shell: mvn --version
       register: maven_output
       changed_when: false
 
