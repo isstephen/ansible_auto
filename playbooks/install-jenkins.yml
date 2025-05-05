@@ -123,6 +123,8 @@
         - pipeline                     # ← the “Pipeline” umbrella plugin
         - pipeline-model-definition    # Declarative Pipeline syntax
         - pipeline-stage-view          # Stage View for pipelines
+        - aws-credentials
+        - Pipeline: AWS Steps
       notify: restart jenkins
     
     ###############################################################################
