@@ -162,24 +162,13 @@
     ###############################################################################
     # 10.  INSTALL DOCKER
     ###############################################################################
-    - name: Install Docker Engine
-      yum:
-        name:
-          - amazon-linux-extras
-          - docker
-        state: present
-    
-    - name: Enable & start Docker daemon
-      service:
-        name: docker
-        state: started
-        enabled: yes
-    
-    - name: Add Jenkins user to docker group
-      user:
-        name: jenkins
-        groups: docker
-        append: yes
+    - name: Install Docker via shell
+      shell: |
+        amazon-linux-extras install docker -y || yum install -y docker
+        systemctl enable docker
+        systemctl start docker
+      args:
+        creates: /usr/bin/docker
 
   #####################################################################
   # Handlers
