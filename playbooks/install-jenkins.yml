@@ -156,6 +156,20 @@
         create: yes
       notify: restart jenkins
     # ← blank line above closes the tasks list
+
+    - name: Add AWS credentials to Jenkins
+      community.general.jenkins_credential:
+        url: http://52.2.128.112:8080
+        user: admin
+        password: admin
+        state: present
+        domain: _                # “_” is the global domain
+        id: aws-creds-id
+        description: "AWS ECR Push Key"
+        kind: username_password
+        username: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+        password: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+
     
   #####################################################################
   # Handlers
