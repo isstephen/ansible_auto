@@ -158,7 +158,29 @@
         create: yes
       notify: restart jenkins
     # ← blank line above closes the tasks list
+
+    ###############################################################################
+    # 10.  INSTALL DOCKER
+    ###############################################################################
+    - name: Install Docker Engine
+      yum:
+        name:
+          - amazon-linux-extras
+          - docker
+        state: present
     
+    - name: Enable & start Docker daemon
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Add Jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
   #####################################################################
   # Handlers
   #####################################################################
