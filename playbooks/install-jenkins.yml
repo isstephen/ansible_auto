@@ -162,13 +162,30 @@
     ###############################################################################
     # 10.  INSTALL DOCKER
     ###############################################################################
-    - name: Install Docker via shell
+    - name: Install Docker binaries
       shell: |
-        amazon-linux-extras install docker -y || yum install -y docker
-        systemctl enable docker
-        systemctl start docker
+        amazon-linux-extras install docker -y \
+          || yum install -y docker
       args:
         creates: /usr/bin/docker
+    
+    - name: Ensure containerd is enabled and running
+      service:
+        name: containerd
+        enabled: yes
+        state: started
+    
+    - name: Enable and start Docker service
+      service:
+        name: docker
+        enabled: yes
+        state: started
+    
+    - name: Add Jenkins user to docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
 
   #####################################################################
   # Handlers
