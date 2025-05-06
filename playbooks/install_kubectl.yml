@@ -39,7 +39,7 @@
     
     - name: Install AWS CLI v2
       become: yes
-      shell: ./aws/install
+      shell: ./aws/install --update
     
     - name: Verify AWS CLI v2
       become: yes
