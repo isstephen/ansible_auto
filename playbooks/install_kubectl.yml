@@ -1,0 +1,45 @@
+---
+- name: Install and configure kubectl on eks-bootstrap server
+  hosts: eks-bootstrap
+  become: yes
+
+  vars:
+    eks_cluster_name: webapp-cluster
+    eks_region: us-east-1
+    kubectl_version: "1.30.0"
+
+  tasks:
+    - name: Install dependencies (curl, unzip)
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - unzip
+
+    - name: Download kubectl binary
+      get_url:
+        url: "https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Verify kubectl installation
+      command: kubectl version --client --short
+      register: kubectl_version_check
+
+    - name: Show kubectl version
+      debug:
+        msg: "{{ kubectl_version_check.stdout }}"
+
+    - name: Ensure awscli is installed
+      package:
+        name: awscli
+        state: present
+
+    - name: Update kubeconfig for EKS cluster
+      command: >
+        aws eks update-kubeconfig
+        --region {{ eks_region }}
+        --name {{ eks_cluster_name }}
+      environment:
+        AWS_PROFILE: default
