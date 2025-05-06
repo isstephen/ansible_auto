@@ -9,8 +9,8 @@
     kubectl_version: "1.30.0"
 
   tasks:
-    - name: Install dependencies (curl, unzip)
-      package:
+    - name: Install curl and unzip using yum
+      yum:
         name: "{{ item }}"
         state: present
       loop:
