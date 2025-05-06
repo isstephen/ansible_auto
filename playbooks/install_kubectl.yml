@@ -29,9 +29,26 @@
       debug:
         msg: "{{ kubectl_version_check.stdout }}"
 
-    - name: Install awscli using yum command
+    - name: Download AWS CLI v2 installer
       become: yes
-      shell: yum install -y awscli
+      shell: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    
+    - name: Unzip AWS CLI v2 installer
+      become: yes
+      shell: unzip -o awscliv2.zip
+    
+    - name: Install AWS CLI v2
+      become: yes
+      shell: ./aws/install
+    
+    - name: Verify AWS CLI v2
+      become: yes
+      shell: /usr/local/bin/aws --version
+      register: awscli_check
+    
+    - name: Show AWS CLI version
+      debug:
+        var: awscli_check.stdout
 
     - name: Update kubeconfig for EKS cluster
       command: >
