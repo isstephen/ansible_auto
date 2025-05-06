@@ -54,4 +54,4 @@
       become: yes
       environment:
         AWS_PROFILE: default
-      command: /usr/local/bin/aws eks update-kubeconfig --region {{ eks_region }} --name {{ eks_cluster_name }}
+      command: /usr/local/bin/aws --profile default eks update-kubeconfig --region us-east-1 --name webapp-cluster
