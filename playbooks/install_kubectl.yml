@@ -11,11 +11,11 @@
   tasks:
     - name: Install curl 
       become: yes
-      command: dnf install -y curl
+      command: yum install -y curl
 
     - name: Install unzip
       become: yes
-      command: dnf install -y unzip
+      command: yum install -y unzip
 
     - name: Download kubectl binary
       get_url:
