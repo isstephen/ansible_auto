@@ -9,13 +9,17 @@
     kubectl_version: "1.30.0"
 
   tasks:
-    - name: Install curl and unzip using yum
-      yum:
-        name: "{{ item }}"
-        state: present
-      loop:
-        - curl
-        - unzip
+    - name: Install curl 
+      become: yes
+      command: dnf install -y curl
+      args:
+        warn: false
+
+    - name: Install unzip
+      become: yes
+      command: dnf install -y unzip
+      args:
+        warn: false
 
     - name: Download kubectl binary
       get_url:
