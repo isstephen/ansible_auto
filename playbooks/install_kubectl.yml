@@ -51,9 +51,7 @@
         var: awscli_check.stdout
 
     - name: Update kubeconfig for EKS cluster
-      command: >
-        aws eks update-kubeconfig
-        --region {{ eks_region }}
-        --name {{ eks_cluster_name }}
+      become: yes
       environment:
         AWS_PROFILE: default
+      command: /usr/local/bin/aws eks update-kubeconfig --region {{ eks_region }} --name {{ eks_cluster_name }}
