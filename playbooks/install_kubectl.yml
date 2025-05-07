@@ -51,4 +51,11 @@
         var: awscli_check.stdout
     
     - name: Configure kubeconfig for EKS cluster
-      command: aws eks update-kubeconfig --name {{ eks_cluster_name }} --region {{ eks_region }}
+      become: yes
+      environment:
+        AWS_ACCESS_KEY_ID:     "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+        AWS_DEFAULT_REGION:    "{{ eks_region }}"
+      command: /usr/local/bin/aws eks update-kubeconfig \
+                 --name {{ eks_cluster_name }} \
+                 --region {{ eks_region }}
