@@ -1,4 +1,4 @@
 ---
 collections:
-  - name: community.kubernetes
-    version: "2.24.0"
+  - name: kubernetes.core
+    version: "5.2.0"
