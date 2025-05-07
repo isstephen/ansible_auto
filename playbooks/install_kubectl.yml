@@ -49,9 +49,10 @@
     - name: Show AWS CLI version
       debug:
         var: awscli_check.stdout
-
-    - name: Update kubeconfig for EKS cluster
-      become: yes
+    
+    - name: Configure kubeconfig for EKS cluster
+      command: aws eks update-kubeconfig --name {{ eks_cluster_name }} --region {{ eks_region }}
       environment:
-        AWS_PROFILE: default
-      command: /usr/local/bin/aws --profile default eks update-kubeconfig --region us-east-1 --name webapp-cluster
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_DEFAULT_REGION: "{{ eks_region }}"
