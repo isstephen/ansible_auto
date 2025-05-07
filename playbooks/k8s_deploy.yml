@@ -3,18 +3,21 @@
   hosts: eks-bootstrap
   gather_facts: no
 
+  collections:
+    - kubernetes.core
+
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
-    - name: Apply Webapp Deployment manifest
-      command: >
-        kubectl apply
-          --kubeconfig {{ kubeconfig_path }}
-          -f {{ playbook_dir }}/webapp-deployment.yaml
+    - name: Apply Webapp Deployment
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        src: "{{ playbook_dir }}/webapp-deployment.yaml"
 
-    - name: Apply Webapp Service manifest
-      command: >
-        kubectl apply
-          --kubeconfig {{ kubeconfig_path }}
-          -f {{ playbook_dir }}/webapp-service.yaml
+    - name: Apply Webapp Service
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        src: "{{ playbook_dir }}/webapp-service.yaml"
