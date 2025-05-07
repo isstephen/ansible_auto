@@ -2,14 +2,23 @@
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
   gather_facts: no
-
-  collections:
-    - kubernetes.core
-
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
+    - name: Ensure python3-pip is installed
+      become: yes
+      package:
+        name: python3-pip
+        state: present
+
+    - name: Install Kubernetes Python client
+      become: yes
+      pip:
+        name:
+          - kubernetes
+        executable: pip3
+
     - name: Apply Webapp Deployment
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
