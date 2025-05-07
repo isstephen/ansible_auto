@@ -10,10 +10,10 @@
       community.kubernetes.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
-        definition: "{{ lookup('file','k8s/webapp-deployment.yaml') }}"
+        definition: "{{ lookup('file','webapp-deployment.yaml') }}"
 
     - name: Apply Webapp Service manifest
       community.kubernetes.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
-        definition: "{{ lookup('file','k8s/webapp-service.yaml') }}"
+        definition: "{{ lookup('file','webapp-service.yaml') }}"
