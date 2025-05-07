@@ -1,0 +1,19 @@
+---
+- name: Deploy Webapp to EKS
+  hosts: eks-bootstrap
+  gather_facts: no
+  vars:
+    kubeconfig_path: /home/ec2-user/.kube/config
+
+  tasks:
+    - name: Apply Webapp Deployment manifest
+      community.kubernetes.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        definition: "{{ lookup('file','k8s/webapp-deployment.yaml') }}"
+
+    - name: Apply Webapp Service manifest
+      community.kubernetes.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        state: present
+        definition: "{{ lookup('file','k8s/webapp-service.yaml') }}"
