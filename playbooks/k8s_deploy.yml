@@ -13,6 +13,7 @@
           - python3   # on AL2 this will pull in the default python3 package (which includes pip3)
           - python3-pip
         state: present
+        use_backend: dnf5
 
     - name: Install Kubernetes Python client
       become: yes
