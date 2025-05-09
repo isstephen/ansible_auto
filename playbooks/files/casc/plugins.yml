@@ -10,3 +10,4 @@ jenkins:
       - pipeline       # Pipeline (core Pipeline support)
       - pipeline-model-definition # Declarative Pipeline support
       - pipeline-stage-view       # Stage View for your pipelines
+      - ssh-agent
