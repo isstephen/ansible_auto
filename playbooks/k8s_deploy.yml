@@ -8,8 +8,12 @@
   tasks:
     - name: Ensure python3 & pip3 are installed
       become: yes
-      ansible.builtin.command: dnf install -y python3 python3-pip
-      changed_when: false   # dnf exits 0 whether it installs or not
+      ansible.builtin.yum:
+        name:
+          - python3          # amazon‑linux‑extras maps this to python3.x
+          - python3-pip
+        state: present
+        use_backend: auto    # default; dnf5 on AL2023, yum/dnf4 on AL2
 
     - name: Install Kubernetes Python client
       become: yes
