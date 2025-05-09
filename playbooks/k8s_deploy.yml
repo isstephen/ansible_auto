@@ -8,12 +8,8 @@
   tasks:
     - name: Ensure python3 & pip3 are installed
       become: yes
-      yum:
-        name:
-          - python3   # on AL2 this will pull in the default python3 package (which includes pip3)
-          - python3-pip
-        state: present
-        use_backend: dnf5
+      ansible.builtin.command: dnf install -y python3 python3-pip
+      changed_when: false   # dnf exits 0 whether it installs or not
 
     - name: Install Kubernetes Python client
       become: yes
