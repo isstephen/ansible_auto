@@ -1,13 +1,1 @@
-jenkins:
-  plugins:
-    sites:
-      - id: "default"
-        url: "https://updates.jenkins.io/download"
-    required:
-      - git
-      - maven-plugin          # “Maven Integration” in the GUI
-      - configuration-as-code # keep JCasC itself present
-      - pipeline       # Pipeline (core Pipeline support)
-      - pipeline-model-definition # Declarative Pipeline support
-      - pipeline-stage-view       # Stage View for your pipelines
-      - ssh-agent
+
