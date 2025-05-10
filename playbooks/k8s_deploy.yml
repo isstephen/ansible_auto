@@ -1,23 +1,35 @@
 ---
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
-  gather_facts: no
+  gather_facts: yes                      # <–– we need facts to detect pkg_mgr
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
-    - name: Ensure python3 & pip3 are installed
+
+    # on AL2 (yum)
+    - name: Install python3 & pip3 via yum
+      when: ansible_facts.pkg_mgr == 'yum'
       become: yes
       ansible.builtin.yum:
         name:
-          - python3          # amazon‑linux‑extras maps this to python3.x
+          - python3
           - python3-pip
         state: present
-        use_backend: auto    # default; dnf5 on AL2023, yum/dnf4 on AL2
+
+    - name: Install python3 & pip3 via dnf
+      when: ansible_facts.pkg_mgr == 'dnf'
+      become: yes
+      ansible.builtin.dnf:
+        name:
+          - python3
+          - python3-pip
+        state: present
+        use_backend: dnf5
 
     - name: Install Kubernetes Python client
       become: yes
-      pip:
+      ansible.builtin.pip:
         name: kubernetes
         executable: pip3
 
