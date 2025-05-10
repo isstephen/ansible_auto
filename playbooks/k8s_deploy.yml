@@ -8,11 +8,11 @@
   tasks:
     - name: Enable Python 3.8 and install pip
       become: yes
-      ansible.builtin.shell: |
-        amazon-linux-extras enable python3.8
-        yum clean metadata
-        yum install -y python3.8 python3.8-pip
-      args:
+      ansible.builtin.shell:
+        cmd: |
+          amazon-linux-extras enable python3.8
+          yum clean metadata
+          yum install -y python3.8 python3.8-pip
         warn: false
 
     - name: Install the Kubernetes Python client into Python 3.8
@@ -21,7 +21,6 @@
         executable: /usr/bin/python3.8 -m pip
         name:
           - kubernetes
-          - kubernetes-asyncio
 
     - name: Apply Webapp Deployment
       collections:
