@@ -2,6 +2,8 @@
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
   gather_facts: no
+  collections:
+    - kubernetes.core
   vars:
     # tell Ansible to use Python 3.8 for all subsequent steps
     ansible_python_interpreter: /usr/bin/python3.8
@@ -37,13 +39,13 @@
         executable: /usr/bin/pip3.8
 
     - name: Apply Webapp Deployment manifest
-      community.kubernetes.k8s:
+      kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
 
     - name: Apply Webapp Service manifest
-      community.kubernetes.k8s:
+      kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-service.yaml"
