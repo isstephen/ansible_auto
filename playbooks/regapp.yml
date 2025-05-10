@@ -6,23 +6,12 @@
     ansible_python_interpreter: /usr/bin/python3.8
 
   tasks:
-    - name: Copy Deployment manifest to bastion
-      copy:
-        src: "{{ playbook_dir }}/webapp-deployment.yaml"
-        dest: /home/ec2-user/webapp-deployment.yaml
-        mode: '0644'
-
-    - name: Copy Service manifest to bastion
-      copy:
-        src: "{{ playbook_dir }}/webapp-service.yaml"
-        dest: /home/ec2-user/webapp-service.yaml
-        mode: '0644'
+    # … your copy/manifest tasks …
 
     - name: Ensure pip for Python 3.8 is up to date
       become: yes
-      shell: |
-        /usr/bin/python3.8 -m pip install --upgrade pip
-      args:
+      ansible.builtin.shell:
+        cmd: /usr/bin/python3.8 -m pip install --upgrade pip
         warn: false
 
     - name: Install Kubernetes Python client into Python 3.8
@@ -30,10 +19,6 @@
       pip:
         name: kubernetes
         executable: /usr/bin/python3.8 -m pip
-      # alternatively, if you have a /usr/bin/pip3.8:
-      # pip:
-      #   name: kubernetes
-      #   executable: /usr/bin/pip3.8
 
     - name: Apply Deployment to EKS
       collections:
