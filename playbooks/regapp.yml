@@ -41,17 +41,17 @@
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
-        src: "{{ app_deployment_yaml }}"
-      when: deployment_file.stat.exists
-
+        src: "{{ playbook_dir }}/webapp-deployment.yaml"
+      delegate_to: localhost
+    
     - name: Apply Service YAML to Kubernetes
       collections:
         - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
-        src: "{{ app_service_yaml }}"
-      when: service_file.stat.exists
+        src: "{{ playbook_dir }}/webapp-service.yaml"
+      delegate_to: localhost
 
     - name: Debug which image tag is being used
       ansible.builtin.debug:
