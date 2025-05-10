@@ -1,58 +1,37 @@
 ---
-- name: Deploy regapp application to Kubernetes (EKS)
-  hosts: kubernetes
-  become: yes
-  become_method: sudo
-
+- name: Deploy Webapp to EKS
+  hosts: eks-bootstrap
+  gather_facts: yes
   vars:
-    # drop the recursive app_tag definition!
-    default_app_tag: latest
-
-    aws_account_id: "732583169994"
-    aws_region: "us-east-1"
-
-    kubeconfig_path: /home/ans2admin/.kube/config
-    app_deployment_yaml: /var/lib/jenkins/workspace/newdeployment/webapp-deployment.yaml
-    app_service_yaml:    /var/lib/jenkins/workspace/newdeployment/webapp-service.yaml
-
-    full_image_path: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/regapp"
+    kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
-    - name: Ensure Deployment YAML exists
-      ansible.builtin.stat:
-        path: "{{ app_deployment_yaml }}"
-      register: deployment_file
-
-    - name: Ensure Service YAML exists
-      ansible.builtin.stat:
-        path: "{{ app_service_yaml }}"
-      register: service_file
-
-    - name: Update Deployment image with new tag
-      ansible.builtin.replace:
-        path: "{{ app_deployment_yaml }}"
-        regexp: '(image:\s*{{ full_image_path }}:)(\S+)'
-        replace: 'image: {{ full_image_path }}:{{ app_tag | default(default_app_tag) }}'
-      when: deployment_file.stat.exists
-
-    - name: Apply Deployment YAML to Kubernetes
-      collections:
-        - kubernetes.core
-      kubernetes.core.k8s:
-        kubeconfig: "{{ kubeconfig_path }}"
-        state: present
+    - name: Copy Deployment manifest to bastion
+      ansible.builtin.copy:
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
-      delegate_to: localhost
-    
-    - name: Apply Service YAML to Kubernetes
+        dest: /home/ec2-user/webapp-deployment.yaml
+        mode: 0644
+
+    - name: Copy Service manifest to bastion
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/webapp-service.yaml"
+        dest: /home/ec2-user/webapp-service.yaml
+        mode: 0644
+
+    - name: Apply Deployment to EKS
       collections:
         - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
+        src: /home/ec2-user/webapp-deployment.yaml
         state: present
-        src: "{{ playbook_dir }}/webapp-service.yaml"
-      delegate_to: localhost
+        remote_src: yes
 
-    - name: Debug which image tag is being used
-      ansible.builtin.debug:
-        msg: "🚀 Deploying regapp image: {{ full_image_path }}:{{ app_tag | default(default_app_tag) }}"
+    - name: Apply Service to EKS
+      collections:
+        - kubernetes.core
+      kubernetes.core.k8s:
+        kubeconfig: "{{ kubeconfig_path }}"
+        src: /home/ec2-user/webapp-service.yaml
+        state: present
+        remote_src: yes
