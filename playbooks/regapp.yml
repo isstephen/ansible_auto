@@ -1,6 +1,6 @@
 ---
 - name: Deploy Webapp to EKS
-  hosts: eks-bootstrap
+  hosts: kubernetes
   gather_facts: yes
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
