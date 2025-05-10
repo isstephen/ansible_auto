@@ -1,6 +1,5 @@
----
 - name: Deploy Webapp to EKS
-  hosts: kubernetes
+  hosts: eks-bootstrap
   gather_facts: yes
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
@@ -25,7 +24,6 @@
         kubeconfig: "{{ kubeconfig_path }}"
         src: /home/ec2-user/webapp-deployment.yaml
         state: present
-        remote_src: yes
 
     - name: Apply Service to EKS
       collections:
@@ -34,4 +32,3 @@
         kubeconfig: "{{ kubeconfig_path }}"
         src: /home/ec2-user/webapp-service.yaml
         state: present
-        remote_src: yes
