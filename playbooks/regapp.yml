@@ -7,23 +7,33 @@
 
   tasks:
     - name: Copy Deployment manifest to bastion
-      ansible.builtin.copy:
+      copy:
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
         dest: /home/ec2-user/webapp-deployment.yaml
         mode: '0644'
 
     - name: Copy Service manifest to bastion
-      ansible.builtin.copy:
+      copy:
         src: "{{ playbook_dir }}/webapp-service.yaml"
         dest: /home/ec2-user/webapp-service.yaml
         mode: '0644'
 
+    - name: Ensure pip for Python 3.8 is up to date
+      become: yes
+      shell: |
+        /usr/bin/python3.8 -m pip install --upgrade pip
+      args:
+        warn: false
+
     - name: Install Kubernetes Python client into Python 3.8
       become: yes
-      ansible.builtin.pip:
+      pip:
+        name: kubernetes
         executable: /usr/bin/python3.8 -m pip
-        name:
-          - kubernetes
+      # alternatively, if you have a /usr/bin/pip3.8:
+      # pip:
+      #   name: kubernetes
+      #   executable: /usr/bin/pip3.8
 
     - name: Apply Deployment to EKS
       collections:
