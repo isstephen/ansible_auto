@@ -1,18 +1,21 @@
+---
 - name: Deploy regapp application to Kubernetes (EKS)
   hosts: kubernetes
   become: yes
   become_method: sudo
 
   vars:
-    ansible_python_interpreter: /usr/bin/python3
-    app_name: regapp
-    app_tag: "{{ app_tag | default('latest') }}"
+    # drop the recursive app_tag definition!
+    default_app_tag: latest
+
     aws_account_id: "732583169994"
     aws_region: "us-east-1"
-    kubeconfig_path: /home/ansadmin/.kube/config
+
+    kubeconfig_path: /home/ans2admin/.kube/config
     app_deployment_yaml: /var/lib/jenkins/workspace/newdeployment/webapp-deployment.yaml
-    app_service_yaml: /var/lib/jenkins/workspace/newdeployment/webapp-service.yaml
-    full_image_path: "732583169994.dkr.ecr.us-east-1.amazonaws.com/regapp"
+    app_service_yaml:    /var/lib/jenkins/workspace/newdeployment/webapp-service.yaml
+
+    full_image_path: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com/regapp"
 
   tasks:
     - name: Ensure Deployment YAML exists
@@ -28,11 +31,13 @@
     - name: Update Deployment image with new tag
       ansible.builtin.replace:
         path: "{{ app_deployment_yaml }}"
-        regexp: '(image:\s*732583169994\.dkr\.ecr\.us-east-1\.amazonaws\.com/regapp:)([^\\s]+)'
-        replace: 'image: {{ full_image_path }}:{{ app_tag }}'
+        regexp: '(image:\s*{{ full_image_path }}:)(\S+)'
+        replace: 'image: {{ full_image_path }}:{{ app_tag | default(default_app_tag) }}'
       when: deployment_file.stat.exists
 
     - name: Apply Deployment YAML to Kubernetes
+      collections:
+        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -40,6 +45,8 @@
       when: deployment_file.stat.exists
 
     - name: Apply Service YAML to Kubernetes
+      collections:
+        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
@@ -47,5 +54,5 @@
       when: service_file.stat.exists
 
     - name: Debug which image tag is being used
-      debug:
-        msg: "🚀 Deploying regapp image: {{ full_image_path }}:{{ app_tag }}"
+      ansible.builtin.debug:
+        msg: "🚀 Deploying regapp image: {{ full_image_path }}:{{ app_tag | default(default_app_tag) }}"
