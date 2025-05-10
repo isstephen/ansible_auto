@@ -1,21 +1,29 @@
 - name: Deploy Webapp to EKS
-  hosts: kubernetes
+  hosts: eks-bootstrap
   gather_facts: yes
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
+    ansible_python_interpreter: /usr/bin/python3.8
 
   tasks:
     - name: Copy Deployment manifest to bastion
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
         dest: /home/ec2-user/webapp-deployment.yaml
-        mode: 0644
+        mode: '0644'
 
     - name: Copy Service manifest to bastion
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/webapp-service.yaml"
         dest: /home/ec2-user/webapp-service.yaml
-        mode: 0644
+        mode: '0644'
+
+    - name: Install Kubernetes Python client into Python 3.8
+      become: yes
+      ansible.builtin.pip:
+        executable: /usr/bin/python3.8 -m pip
+        name:
+          - kubernetes
 
     - name: Apply Deployment to EKS
       collections:
