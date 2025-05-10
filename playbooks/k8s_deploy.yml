@@ -1,17 +1,14 @@
----
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
-  # you _do_ need facts so Ansible can detect yum/dnf, so remove gather_facts: no
   gather_facts: yes
-
   vars:
     kubeconfig_path: /home/ec2-user/.kube/config
+    ansible_python_interpreter: /usr/bin/python3.8
 
   tasks:
     - name: Enable Python 3.8 and install pip
       become: yes
-      # use the shell module (not command)
-      shell: |
+      ansible.builtin.shell: |
         amazon-linux-extras enable python3.8
         yum clean metadata
         yum install -y python3.8 python3.8-pip
@@ -21,14 +18,12 @@
     - name: Install the Kubernetes Python client into Python 3.8
       become: yes
       ansible.builtin.pip:
-        # point pip at the newly‐installed interpreter
         executable: /usr/bin/python3.8 -m pip
         name:
           - kubernetes
-          - kubernetes-asyncio   # if you need asyncio support
+          - kubernetes-asyncio
 
     - name: Apply Webapp Deployment
-      # make sure you have kubernetes.core in your collections so this module exists
       collections:
         - kubernetes.core
       kubernetes.core.k8s:
@@ -43,4 +38,3 @@
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-service.yaml"
-
