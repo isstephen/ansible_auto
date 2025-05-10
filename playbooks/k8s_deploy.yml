@@ -1,34 +1,50 @@
 ---
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
-  gather_facts: yes                   # <–– enable fact-gathering so ansible_pkg_mgr is set
+  gather_facts: no
   vars:
+    # tell Ansible to use Python 3.8 for all subsequent steps
+    ansible_python_interpreter: /usr/bin/python3.8
     kubeconfig_path: /home/ec2-user/.kube/config
-    ansible_python_interpreter: /usr/bin/python3   # <–– point Ansible at the system Python
 
   tasks:
-    - name: Install python3 & pip3
+    - name: Enable Python 3.8 in Amazon Linux Extras
       become: yes
-      package:
+      ansible.builtin.shell: amazon-linux-extras enable python3.8
+      args:
+        creates: /etc/yum.repos.d/amzn2extra-python3.8.repo
+
+    - name: Clean YUM metadata
+      become: yes
+      ansible.builtin.command: yum clean metadata
+
+    - name: Install Python 3.8 and pip
+      become: yes
+      ansible.builtin.yum:
         name:
-          - python3
-          - python3-pip
+          - python38
+          - python38-pip
         state: present
 
-    - name: Install Kubernetes Python client
-      become: yes
-      pip:
-        name: kubernetes
-        executable: /usr/bin/pip3          # <–– install into the same interpreter
+    - name: Re-gather facts under Python 3.8
+      # now that python3.8 exists and interpreter is set, gathering will succeed
+      ansible.builtin.setup:
 
-    - name: Apply Webapp Deployment
-      kubernetes.core.k8s:
+    - name: Install Kubernetes Python client into Python 3.8
+      become: yes
+      ansible.builtin.pip:
+        name: kubernetes
+        executable: /usr/bin/pip3.8
+
+    - name: Apply Webapp Deployment manifest
+      community.kubernetes.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
 
-    - name: Apply Webapp Service
-      kubernetes.core.k8s:
+    - name: Apply Webapp Service manifest
+      community.kubernetes.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-service.yaml"
+
