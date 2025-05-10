@@ -1,50 +1,44 @@
 ---
 - name: Deploy Webapp to EKS
   hosts: eks-bootstrap
-  gather_facts: no
-  collections:
-    - kubernetes.core
+  # you _do_ need facts so Ansible can detect yum/dnf, so remove gather_facts: no
+  gather_facts: yes
+
   vars:
-    # tell Ansible to use Python 3.8 for all subsequent steps
-    ansible_python_interpreter: /usr/bin/python3.8
     kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
-    - name: Enable Python 3.8 in Amazon Linux Extras
+    - name: Enable Python 3.8 and install pip
       become: yes
-      ansible.builtin.shell: amazon-linux-extras enable python3.8
+      # run the three commands in one go
+      ansible.builtin.shell: |
+        amazon-linux-extras enable python3.8
+        yum clean metadata
+        yum install -y python3.8 python3.8-pip
       args:
-        creates: /etc/yum.repos.d/amzn2extra-python3.8.repo
+        warn: false
 
-    - name: Clean YUM metadata
-      become: yes
-      ansible.builtin.command: yum clean metadata
-
-    - name: Install Python 3.8 and pip
-      become: yes
-      ansible.builtin.yum:
-        name:
-          - python38
-          - python38-pip
-        state: present
-
-    - name: Re-gather facts under Python 3.8
-      # now that python3.8 exists and interpreter is set, gathering will succeed
-      ansible.builtin.setup:
-
-    - name: Install Kubernetes Python client into Python 3.8
+    - name: Install the Kubernetes Python client into Python 3.8
       become: yes
       ansible.builtin.pip:
-        name: kubernetes
-        executable: /usr/bin/pip3.8
+        # point pip at the newly‐installed interpreter
+        executable: /usr/bin/python3.8 -m pip
+        name:
+          - kubernetes
+          - kubernetes-asyncio   # if you need asyncio support
 
-    - name: Apply Webapp Deployment manifest
+    - name: Apply Webapp Deployment
+      # make sure you have kubernetes.core in your collections so this module exists
+      collections:
+        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
 
-    - name: Apply Webapp Service manifest
+    - name: Apply Webapp Service
+      collections:
+        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         state: present
