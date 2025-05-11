@@ -1,44 +1,49 @@
 - name: Deploy Webapp to EKS
   hosts: kubernetes
   gather_facts: yes
+
   vars:
     ansible_python_interpreter: /usr/bin/python3.8
     kubeconfig_path: /home/ec2-user/.kube/config
 
   tasks:
-    - name: Enable Python 3.8 and install pip
+    # --- install python 3.8 idempotently -----------------
+    - name: Enable python3.8 topic
       become: yes
-      ansible.builtin.shell: |
-        amazon-linux-extras enable python3.8
-        yum clean metadata
-        yum install -y python3.8 python3.8-pip
+      command: amazon-linux-extras enable python3.8
       args:
-        warn: false          # <‑‑ goes under args, not beside the module
+        creates: /etc/yum.repos.d/amzn2extra-python3.8.repo   # run once
 
-    - name: Ensure pip for Python 3.8 is up to date
+    - name: Install python38 & pip
       become: yes
-      ansible.builtin.shell:
-        cmd: /usr/bin/python3.8 -m pip install --upgrade pip
-        warn: false
-
-    - name: Install Kubernetes Python client into Python 3.8
-      become: yes
-      ansible.builtin.pip:
-        executable: /usr/bin/python3.8 -m pip
+      yum:
         name:
-          - kubernetes
+          - python38
+          - python38-pip
+        state: present
 
+    # --- pip bits ----------------------------------------
+    - name: Upgrade pip (python3.8)
+      become: yes
+      command: /usr/bin/python3.8 -m pip install --upgrade pip
+      args:
+        creates: /usr/local/bin/pip3.8                       # crude idempotency
+
+    - name: Install kubernetes Python client
+      become: yes
+      pip:
+        executable: /usr/bin/python3.8
+        name: kubernetes
+        state: present
+
+    # --- apply manifests ---------------------------------
     - name: Apply Deployment to EKS
-      collections:
-        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         src: "{{ playbook_dir }}/webapp-deployment.yaml"
         state: present
 
     - name: Apply Service to EKS
-      collections:
-        - kubernetes.core
       kubernetes.core.k8s:
         kubeconfig: "{{ kubeconfig_path }}"
         src: "{{ playbook_dir }}/webapp-service.yaml"
